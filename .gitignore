@@ -1,0 +1,11 @@
+node_modules/
+.n8n/
+.env
+*.log
+client_secret_*.json
+
+#custom files
+issue.md
+notes.md
+prompt.md
+

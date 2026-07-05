@@ -1,0 +1,273 @@
+{
+  "name": "TechCrunch AI Digest Newsletter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "02a3ec31-26f2-4be3-b0ea-13986eb98d6c",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                2
+              ],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 20
+            }
+          ]
+        }
+      },
+      "id": "b9ba058e-0fc4-4edf-a068-b78b8752a17a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed",
+        "options": {}
+      },
+      "id": "d2e7e5cb-f888-4622-a715-296d68b55a79",
+      "name": "RSS Read",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "id": "ab31bc39-9b0e-46ce-bc22-8a6a3d2136e5",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        944,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Please summarize the following TechCrunch news article in exactly two engaging, professional sentences. Focus on the core value proposition, key facts, or important takeaways. Provide ONLY the plain text summary, and do NOT include the article title, markdown formatting (no bold/italics), or HTML tags.\n\nTitle: {{ $json.title }}\nDescription: {{ $json.contentSnippet || $json.content || '' }}",
+        "options": {}
+      },
+      "id": "e5cb8a67-33ad-46ad-b577-48690bda83a6",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1136,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "71c603a7-1129-4103-a856-40f139c57292",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        240
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "tDwwCxk0JNZCl1dR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "id": "2aaf30bf-0b51-4bb0-b1cf-421e0f73f5ba",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1216,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rssItems = $('Limit').all();\nconst aiItems = $input.all();\n\nlet emailHtml = `\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <style>\n    body {\n      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;\n      background-color: #f8fafc;\n      color: #1e293b;\n      margin: 0;\n      padding: 0;\n    }\n    .container {\n      max-width: 600px;\n      margin: 40px auto;\n      background: #ffffff;\n      border-radius: 16px;\n      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);\n      border: 1px solid #e2e8f0;\n      overflow: hidden;\n    }\n    .header {\n      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);\n      color: #ffffff;\n      padding: 36px 24px;\n      text-align: center;\n      border-bottom: 4px solid #0284c7;\n    }\n    .header h1 {\n      margin: 0;\n      font-size: 26px;\n      font-weight: 800;\n      letter-spacing: -0.03em;\n    }\n    .header p {\n      margin: 8px 0 0 0;\n      font-size: 14px;\n      color: #94a3b8;\n      font-weight: 500;\n    }\n    .content {\n      padding: 32px 24px;\n    }\n    .article-card {\n      background: #ffffff;\n      border-radius: 12px;\n      padding: 20px;\n      margin-bottom: 24px;\n      border: 1px solid #f1f5f9;\n      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);\n    }\n    .article-title {\n      font-size: 18px;\n      font-weight: 700;\n      margin: 0 0 8px 0;\n      line-height: 1.4;\n      letter-spacing: -0.01em;\n    }\n    .article-title a {\n      color: #0284c7;\n      text-decoration: none;\n    }\n    .article-title a:hover {\n      color: #0369a1;\n      text-decoration: underline;\n    }\n    .article-meta {\n      font-size: 12px;\n      color: #64748b;\n      margin-bottom: 12px;\n      font-weight: 600;\n      text-transform: uppercase;\n      letter-spacing: 0.05em;\n    }\n    .article-summary {\n      font-size: 14px;\n      line-height: 1.6;\n      color: #334155;\n      margin: 0;\n    }\n    .footer {\n      background-color: #f8fafc;\n      padding: 24px;\n      text-align: center;\n      font-size: 12px;\n      color: #64748b;\n      border-top: 1px solid #e2e8f0;\n      line-height: 1.5;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>⚡ TechCrunch AI Digest</h1>\n      <p>Your curated, AI-summarized tech news briefing</p>\n    </div>\n    <div class=\"content\">\n`;\n\naiItems.forEach((item, index) => {\n  const rss = rssItems[index] ? rssItems[index].json : {};\n  const title = rss.title || 'Untitled Article';\n  const link = rss.link || '#';\n  const pubDate = rss.pubDate ? new Date(rss.pubDate).toLocaleDateString('en-US', {\n    month: 'short',\n    day: 'numeric',\n    year: 'numeric',\n    hour: '2-digit',\n    minute: '2-digit'\n  }) : 'Recently';\n  const summary = item.json.output || 'Summary not available.';\n  \n  emailHtml += `\n    <div class=\"article-card\">\n      <div class=\"article-meta\">Published: ${pubDate}</div>\n      <h2 class=\"article-title\"><a href=\"${link}\" target=\"_blank\">${title}</a></h2>\n      <p class=\"article-summary\">${summary}</p>\n    </div>\n  `;\n});\n\nemailHtml += `\n    </div>\n    <div class=\"footer\">\n      <p>This automated briefing was generated by <strong>n8n</strong> using advanced AI summarization.</p>\n      <p>&copy; ${new Date().getFullYear()} TechCrunch AI Digest. All rights reserved.</p>\n    </div>\n  </div>\n</body>\n</html>\n`;\n\nreturn [{\n  json: {\n    subject: `⚡ TechCrunch AI Digest: ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,\n    htmlBody: emailHtml\n  }\n}];"
+      },
+      "id": "8d720f2b-f43f-468b-a98c-6fac9bd43a91",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "shivshankar5084@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.htmlBody }}",
+        "options": {}
+      },
+      "id": "bb098920-b0b2-4035-985f-0ab0f1698f52",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1584,
+        48
+      ],
+      "webhookId": "19278f49-d181-47b0-8a8a-030475aa2273",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "6p98v8E6kuwoVLcT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "trigger-news-digest",
+        "responseMode": "onReceived",
+        "options": {
+          "responseCode": 200,
+          "responseData": "Workflow Triggered Successfully! The TechCrunch AI Digest newsletter is being compiled and sent."
+        }
+      },
+      "id": "e0e854fa-bd07-4e6f-be61-460d97096e25",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        496,
+        320
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "35277cf8-7e2e-47f0-8e14-45769313537b",
+  "meta": {
+    "instanceId": "9b519f92a2e02b36354aded8e26c160497ebec09d13d92e81600bceede12776c"
+  },
+  "nodeGroups": [],
+  "id": "0LjcJpW14knOCQ1O",
+  "tags": []
+}
